@@ -1,7 +1,15 @@
 pipeline {
 	
 	agent any
-		
+	options {
+		disableConcurrentBuilds()
+		timestamps()
+		buildDiscarder(logRotator(numToKeepStr: '10'))
+	}
+	parameters {
+	    choice(name: 'Environment', choices: 'dev\nqa\prod', description: 'The environment to deploy')
+	}
+			
 	stages {
 		stage ('azure-voting-app-redis - Checkout') {
 			steps {
@@ -10,8 +18,8 @@ pipeline {
 		}
 		stage ('load configurations') {
 			steps{
-					load 'dev/config/Deploy.groovy'
-					echo "${clusterName}"
+		                echo 'load configurations'
+			   	load '"${params.Environment}"/config/Deploy.groovy'
 			}
 	}
 		stage ('authenticate') {
@@ -24,7 +32,7 @@ pipeline {
 		stage ('Helm Deploy to K8s'){
 			steps{
 
-					sh "helm upgrade --install --force ${release} stable/tomcat"
+				sh "helm upgrade --install --force ${Layout_release} ${Layout_chart}"
 				}
 		}	
 	}
